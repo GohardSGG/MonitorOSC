@@ -4,7 +4,7 @@
 
     using System;
 
-    public abstract class Effect_Base : PluginDynamicCommand, IDisposable
+    public abstract class Effect_Button_Base : PluginDynamicCommand, IDisposable
     {
         protected bool _isActive;
         protected readonly string OscAddress;
@@ -13,7 +13,7 @@
         private readonly BitmapColor _defaultActiveColor = new BitmapColor(173, 216, 230);
 
         // 基础构造函数
-        protected Effect_Base(string channelName, string displayName, string description)
+        protected Effect_Button_Base(string channelName, string displayName, string description)
             : this(
                 channelName: channelName,
                 displayName: displayName,
@@ -23,7 +23,7 @@
         { }
 
         // 全参数构造函数
-        protected Effect_Base(
+        protected Effect_Button_Base(
             string channelName,
             string displayName,
             string description,

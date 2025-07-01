@@ -1,6 +1,6 @@
 ﻿namespace Loupedeck.MonitorOSCPlugin.Buttons
 {
-    public class RRS_Button : Channel_Base
+    public class RRS_Button : Channel_Button_Base
     {
         public RRS_Button() : base(
             channelName: "RRS",

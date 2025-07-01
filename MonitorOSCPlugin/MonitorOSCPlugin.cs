@@ -7,6 +7,7 @@
     using System.Threading.Tasks;
     using WebSocketSharp;
     using Loupedeck;
+    using System.Timers;
 
     public class MonitorOSCPlugin : Plugin
     {
@@ -20,7 +21,10 @@
         // === WebSocket配置 ===
         private const string WS_SERVER = "ws://localhost:9122";
         private WebSocket _wsClient;
-        private bool _isReconnecting;
+        private bool _isReconnecting = false;
+        private System.Timers.Timer _reconnectTimer;
+        private bool _isManuallyClosed = false;
+        private const int RECONNECT_DELAY_MS = 5000;
 
         // === 插件初始化 ===
         public MonitorOSCPlugin()
@@ -34,9 +38,63 @@
         // === WebSocket连接管理 ===
         private void InitializeWebSocket()
         {
-            this._wsClient = new WebSocket(WS_SERVER);
-            this._wsClient.OnMessage += this.OnWebSocketMessage;
-            this.Connect();
+            PluginLog.Info("WebSocket: 尝试初始化并连接...");
+            this._isManuallyClosed = false;
+
+            if (this._wsClient != null)
+            {
+                PluginLog.Info("WebSocket: 清理现有WebSocket客户端以便重新初始化。");
+                this._wsClient.OnOpen -= this.OnWebSocketOpen;
+                this._wsClient.OnMessage -= this.OnWebSocketMessage;
+                this._wsClient.OnClose -= this.OnWebSocketClose;
+                this._wsClient.OnError -= this.OnWebSocketError;
+
+                if (this._wsClient.IsAlive)
+                {
+                    try
+                    {
+                        this._wsClient.Close(CloseStatusCode.Normal, "重新初始化WebSocket");
+                        PluginLog.Info("WebSocket: 旧客户端在重新初始化过程中已关闭。");
+                    }
+                    catch (Exception ex)
+                    {
+                        PluginLog.Error($"WebSocket: 重新初始化时关闭旧客户端异常: {ex.Message}");
+                    }
+                }
+                this._wsClient = null;
+                PluginLog.Info("WebSocket: 旧客户端实例已置空。");
+            }
+
+            try
+            {
+                this._wsClient = new WebSocket(WS_SERVER);
+                PluginLog.Info($"WebSocket: 为 {WS_SERVER} 创建新客户端。");
+
+                this._wsClient.OnOpen += this.OnWebSocketOpen;
+                this._wsClient.OnMessage += this.OnWebSocketMessage;
+                this._wsClient.OnClose += this.OnWebSocketClose;
+                this._wsClient.OnError += this.OnWebSocketError;
+                PluginLog.Info("WebSocket: 事件处理器已订阅。");
+
+                this._wsClient.Connect();
+                PluginLog.Info("WebSocket: 连接尝试已启动 (Connect() 已调用)。");
+            }
+            catch (Exception ex)
+            {
+                PluginLog.Error($"WebSocket: 在InitializeWebSocket中创建新WebSocket客户端或调用Connect()时异常: {ex.Message}");
+                this.ScheduleDelayedReconnect();
+            }
+        }
+
+        private void OnWebSocketOpen(object sender, EventArgs e)
+        {
+            PluginLog.Info("WebSocket: 连接成功打开。");
+            this._isReconnecting = false;
+            if (this._reconnectTimer != null)
+            {
+                this._reconnectTimer.Stop();
+                PluginLog.Info("WebSocket: 由于连接成功，重连定时器已停止。");
+            }
         }
 
         private void OnWebSocketMessage(object sender, MessageEventArgs e)
@@ -53,43 +111,70 @@
             }
         }
 
-        private void Connect()
+        private void OnWebSocketClose(object sender, CloseEventArgs e)
         {
-            if (this._wsClient?.IsAlive == true)
+            PluginLog.Warning($"WebSocket: 连接已关闭。WasClean: {e.WasClean}, Code: {e.Code} ({((CloseStatusCode)e.Code).ToString()}), Reason: '{e.Reason}'");
+            if (!this._isManuallyClosed)
             {
-                return;
+                PluginLog.Info("WebSocket: 连接意外关闭。正在安排重连...");
+                this.ScheduleDelayedReconnect();
             }
-
-            Task.Run(() =>
+            else
             {
-                try
-                {
-                    this._wsClient?.Connect();
-                    //PluginLog.Info("WebSocket连接成功");
-                }
-                catch (Exception ex)
-                {
-                    //PluginLog.Error($"连接失败: {ex.Message}");
-                    this.ScheduleReconnect();
-                }
-            });
+                PluginLog.Info("WebSocket: 连接手动关闭 (或在重新初始化期间)。此事件不安排重连。");
+            }
         }
 
-        private void ScheduleReconnect()
+        private void OnWebSocketError(object sender, WebSocketSharp.ErrorEventArgs e)
         {
-            if (this._isReconnecting)
+            PluginLog.Error($"WebSocket: 发生错误: {e.Message}");
+            if (!this._isManuallyClosed)
             {
+                PluginLog.Info("WebSocket: 错误表明潜在的连接问题。正在安排重连。");
+                this.ScheduleDelayedReconnect();
+            }
+            else
+            {
+                PluginLog.Info("WebSocket: 发生错误但已标记手动关闭。此事件不安排重连。");
+            }
+        }
+
+        private void ScheduleDelayedReconnect()
+        {
+            if (this._isManuallyClosed)
+            {
+                PluginLog.Info("WebSocket: 插件正在关闭或连接被手动关闭，跳过重连安排。");
                 return;
             }
-            this._isReconnecting = true;
 
-            Task.Run(async () =>
+            if (this._isReconnecting)
             {
-                await Task.Delay(5000);
-                //PluginLog.Info("尝试重新连接...");
-                this._isReconnecting = false;
-                this.InitializeWebSocket();
-            });
+                PluginLog.Info("WebSocket: 重连已在进行中或已被其他事件安排。跳过重复安排。");
+                return;
+            }
+
+            this._isReconnecting = true;
+            PluginLog.Info($"WebSocket: 安排在 {RECONNECT_DELAY_MS / 1000} 秒后尝试重连...");
+
+            if (this._reconnectTimer == null)
+            {
+                this._reconnectTimer = new System.Timers.Timer(RECONNECT_DELAY_MS);
+                this._reconnectTimer.Elapsed += this.OnReconnectTimerElapsed;
+                this._reconnectTimer.AutoReset = false;
+            }
+            else
+            {
+                this._reconnectTimer.Interval = RECONNECT_DELAY_MS;
+                this._reconnectTimer.Stop();
+            }
+            this._reconnectTimer.Start();
+        }
+
+        private void OnReconnectTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            PluginLog.Info("WebSocket: 重连定时器已触发。尝试重新初始化WebSocket。");
+            this._isReconnecting = false;
+            this.InitializeWebSocket();
         }
 
         // === OSC二进制消息解析 ===
@@ -144,7 +229,7 @@
         {
             if (Instance?._wsClient?.IsAlive != true)
             {
-                //PluginLog.Error("WebSocket连接未就绪，发送失败");
+                PluginLog.Warning($"WebSocket: 连接不活跃。无法发送OSC: {address} -> {value}");
                 return;
             }
 
@@ -157,8 +242,8 @@
             }
             catch (Exception ex)
             {
-                //PluginLog.Error($"发送消息失败: {ex.Message}");
-                Instance.ScheduleReconnect();
+                PluginLog.Error($"发送OSC消息失败: {address} -> {value}, 异常: {ex.Message}");
+                Instance.ScheduleDelayedReconnect();
             }
         }
 
@@ -211,8 +296,54 @@
         // === 插件卸载 ===
         public override void Unload()
         {
-            this._wsClient?.Close();
+            PluginLog.Info("WebSocket: 插件卸载被调用。正在清理WebSocket资源。");
+            this._isManuallyClosed = true;
+
+            if (this._reconnectTimer != null)
+            {
+                this._reconnectTimer.Stop();
+                this._reconnectTimer.Elapsed -= this.OnReconnectTimerElapsed;
+                this._reconnectTimer.Dispose();
+                this._reconnectTimer = null;
+                PluginLog.Info("WebSocket: 重连定时器已停止并释放。");
+            }
+
+            if (this._wsClient != null)
+            {
+                this._wsClient.OnOpen -= this.OnWebSocketOpen;
+                this._wsClient.OnMessage -= this.OnWebSocketMessage;
+                this._wsClient.OnClose -= this.OnWebSocketClose;
+                this._wsClient.OnError -= this.OnWebSocketError;
+                PluginLog.Info("WebSocket: 卸载时事件处理器已取消订阅。");
+
+                if (this._wsClient.IsAlive)
+                {
+                    try
+                    {
+                        this._wsClient.Close(CloseStatusCode.Normal, "插件卸载中");
+                        PluginLog.Info("WebSocket: 卸载时连接已关闭。");
+                    }
+                    catch (Exception ex)
+                    {
+                        PluginLog.Error($"WebSocket: 卸载时Close()异常: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    PluginLog.Info("WebSocket: 卸载时连接未活跃。");
+                }
+                this._wsClient = null;
+                PluginLog.Info("WebSocket: 客户端实例已置空。");
+            }
+            else
+            {
+                PluginLog.Info("WebSocket: 卸载时客户端实例已经为空。");
+            }
+            
+            this._isReconnecting = false;
+
             base.Unload();
+            PluginLog.Info("MonitorOSC插件已成功卸载。");
         }
     }
 

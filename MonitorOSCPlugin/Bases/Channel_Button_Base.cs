@@ -5,7 +5,7 @@
 
     using System;
 
-    public abstract class Channel_Base : PluginDynamicCommand, IDisposable
+    public abstract class Channel_Button_Base : PluginDynamicCommand, IDisposable
     {
         protected readonly string ChannelName;
         protected readonly string SoloAddress;
@@ -15,7 +15,7 @@
         private readonly BitmapColor _muteColor = new BitmapColor(255, 0, 0);
         private readonly BitmapColor _defaultColor = new BitmapColor(0, 0, 0);
 
-        protected Channel_Base(string channelName, string displayName, string description)
+        protected Channel_Button_Base(string channelName, string displayName, string description)
             : base(displayName, description, "Buttons")
         {
             this.ChannelName = channelName;

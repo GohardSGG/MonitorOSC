@@ -1,6 +1,6 @@
 ﻿namespace Loupedeck.MonitorOSCPlugin.Buttons
 {
-    public class Master_Dim_Button : Effect_Base
+    public class Master_Dim_Button : Effect_Button_Base
     {
         public Master_Dim_Button() : base(
             channelName: "Master Dim",

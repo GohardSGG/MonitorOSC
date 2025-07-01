@@ -1,6 +1,6 @@
 ﻿namespace Loupedeck.MonitorOSCPlugin.Buttons
 {
-    public class SUB_F_Button : Channel_Base
+    public class SUB_F_Button : Channel_Button_Base
     {
         public SUB_F_Button() : base(
             channelName: "SUB F",

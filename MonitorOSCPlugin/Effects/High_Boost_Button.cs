@@ -1,12 +1,12 @@
 ﻿namespace Loupedeck.MonitorOSCPlugin.Buttons
 {
-    public class LFE_Add_10dB : Effect_Button_Base
+    public class High_Boost_Button : Effect_Button_Base
     {
-        public LFE_Add_10dB() : base(
-            channelName: "LFE Add 10dB",
-            displayName: "LFE +10dB",
-            description: "LFE通道 +10dB",
-            oscAddress: "LFE/Add 10dB",
+        public High_Boost_Button() : base(
+            channelName: "High Boost",
+            displayName: "High Boost",
+            description: "High Boost",
+            oscAddress: "Master Effect/High Boost",
             activeColor: new BitmapColor(136, 226, 255)) // 黄色背景
         { }
 
@@ -23,7 +23,7 @@
 
 
             bitmap.DrawText(
-                text: "+10dB",
+                text: "High",
                 x: 25,
                 y: 25,
                 width: 28,
@@ -32,7 +32,7 @@
                 color: textColor_1
             );
             bitmap.DrawText(
-                text: "LFE",
+                text: "Boost",
                 x: 55,
                 y: 50,
                 width: 14,

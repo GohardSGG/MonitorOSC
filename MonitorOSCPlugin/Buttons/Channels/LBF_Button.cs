@@ -1,6 +1,6 @@
 ﻿namespace Loupedeck.MonitorOSCPlugin.Buttons
 {
-    public class LBF_Button : Channel_Base
+    public class LBF_Button : Channel_Button_Base
     {
         public LBF_Button() : base(
             channelName: "LBF",

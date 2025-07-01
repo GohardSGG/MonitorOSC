@@ -1,6 +1,6 @@
 ﻿namespace Loupedeck.MonitorOSCPlugin.Dials
 {
-    public class Top_Dial : Group_Base
+    public class Top_Dial : Group_Dial_Base
     {
         public Top_Dial()
             : base(

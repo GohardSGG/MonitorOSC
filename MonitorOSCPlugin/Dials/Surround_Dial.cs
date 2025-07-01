@@ -1,6 +1,6 @@
 ﻿namespace Loupedeck.MonitorOSCPlugin.Dials
 {
-    public class Surround_Dial : Group_Base
+    public class Surround_Dial : Group_Dial_Base
     {
         public Surround_Dial()
             : base(

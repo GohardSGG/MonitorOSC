@@ -1,6 +1,6 @@
 ﻿namespace Loupedeck.MonitorOSCPlugin.Buttons
 {
-    public class RTF_Button : Channel_Base
+    public class RTF_Button : Channel_Button_Base
     {
         public RTF_Button() : base(
             channelName: "RTF",

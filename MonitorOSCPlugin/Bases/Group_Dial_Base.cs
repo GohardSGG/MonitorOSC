@@ -4,7 +4,7 @@
 
     using System;
 
-    public abstract class Group_Base : PluginDynamicAdjustment, IDisposable
+    public abstract class Group_Dial_Base : PluginDynamicAdjustment, IDisposable
     {
         protected readonly string GroupName;
         protected readonly string[] SoloAddresses;
@@ -18,7 +18,7 @@
         private bool _isSoloActive = false;
         private bool _isMuteActive = false;
 
-        protected Group_Base(string groupName, string[] soloAddresses, string[] muteAddresses, string displayName, string description, int fontSize = 19)
+        protected Group_Dial_Base(string groupName, string[] soloAddresses, string[] muteAddresses, string displayName, string description, int fontSize = 19)
             : base(displayName, description, "Dials", hasReset: true)
         {
             this.GroupName = groupName;

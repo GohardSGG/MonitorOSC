@@ -1,6 +1,6 @@
 ﻿namespace Loupedeck.MonitorOSCPlugin.Buttons
 {
-    public class RSS_Button : Channel_Base
+    public class RSS_Button : Channel_Button_Base
     {
         public RSS_Button() : base(
             channelName: "RSS",

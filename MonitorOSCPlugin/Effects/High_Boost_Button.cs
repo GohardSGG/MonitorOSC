@@ -6,7 +6,7 @@
             channelName: "High Boost",
             displayName: "High Boost",
             description: "High Boost",
-            oscAddress: "Master Effect/High Boost",
+            oscAddress: "Master/Effect/High_Boost",
             activeColor: new BitmapColor(136, 226, 255)) // 黄色背景
         { }
 

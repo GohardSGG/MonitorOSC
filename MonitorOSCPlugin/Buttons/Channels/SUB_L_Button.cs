@@ -3,7 +3,7 @@
     public class SUB_L_Button : Channel_Button_Base
     {
         public SUB_L_Button() : base(
-            channelName: "SUB L",
+            channelName: "SUB_L",
             displayName: "SUB L Button",
             description: "SUB Left 通道按钮")
         { }

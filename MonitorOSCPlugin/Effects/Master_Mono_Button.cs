@@ -6,7 +6,7 @@
             channelName: "Master Mono",
             displayName: "Master Mono Button",
             description: "主通道Mono控制",
-            oscAddress: "Master Effect/Mono",
+            oscAddress: "Master/Effect/Mono",
             activeColor: new BitmapColor(255, 0, 0)) // 
         { }
 

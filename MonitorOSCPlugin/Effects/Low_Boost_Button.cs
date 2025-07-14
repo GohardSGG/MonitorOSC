@@ -6,7 +6,7 @@
             channelName: "Low Boost",
             displayName: "Low Boost",
             description: "Low Boost",
-            oscAddress: "Master Effect/Low Boost",
+            oscAddress: "Master/Effect/Low_Boost",
             activeColor: new BitmapColor(136, 226, 255)) // 黄色背景
         { }
 

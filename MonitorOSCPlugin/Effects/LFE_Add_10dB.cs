@@ -6,7 +6,7 @@
             channelName: "LFE Add 10dB",
             displayName: "LFE +10dB",
             description: "LFE通道 +10dB",
-            oscAddress: "LFE/Add 10dB",
+            oscAddress: "LFE/Add_10dB",
             activeColor: new BitmapColor(136, 226, 255)) // 黄色背景
         { }
 

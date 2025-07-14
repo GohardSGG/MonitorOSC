@@ -3,7 +3,7 @@
     public class SUB_R_Button : Channel_Button_Base
     {
         public SUB_R_Button() : base(
-            channelName: "SUB R",
+            channelName: "SUB_R",
             displayName: "SUB R Button",
             description: "SUB Right 通道按钮")
         { }

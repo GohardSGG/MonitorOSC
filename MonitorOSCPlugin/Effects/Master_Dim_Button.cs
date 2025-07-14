@@ -6,7 +6,7 @@
             channelName: "Master Dim",
             displayName: "Master Dim Button",
             description: "主通道衰减控制",
-            oscAddress: "Master Volume/Dim",
+            oscAddress: "Master/Dim",
             activeColor: new BitmapColor(255, 255, 0)) // 黄色背景
         { }
 

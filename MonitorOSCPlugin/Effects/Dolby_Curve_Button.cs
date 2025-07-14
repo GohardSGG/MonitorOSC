@@ -6,7 +6,7 @@
             channelName: "Dolby Curve",
             displayName: "Dolby Curve",
             description: "Dolby Curve",
-            oscAddress: "Master Effect/Dolby Curve",
+            oscAddress: "Master/Effect/Dolby_Curve",
             activeColor: new BitmapColor(136, 226, 255)) // 黄色背景
         { }
 

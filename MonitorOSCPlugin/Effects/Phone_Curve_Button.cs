@@ -6,7 +6,7 @@
             channelName: "Phone Curve",
             displayName: "Phone Curve",
             description: "Phone Curve",
-            oscAddress: "Master Effect/Phone Curve",
+            oscAddress: "Master/Effect/Phone Curve",
             activeColor: new BitmapColor(136, 226, 255)) // 黄色背景
         { }
 

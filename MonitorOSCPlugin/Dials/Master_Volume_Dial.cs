@@ -9,8 +9,8 @@
     public class MasterVolumeDial : PluginDynamicAdjustment, IDisposable
     {
         // ========== 核心配置 ==========
-        private const string VOLUME_ADDRESS = "/Monitor/Master Volume";
-        private const string DIM_ADDRESS = "/Monitor/Master Volume/Mute";
+        private const string VOLUME_ADDRESS = "/Monitor/Master/Volume";
+        private const string DIM_ADDRESS = "/Monitor/Master/Mute";
 
         // ========== 状态管理 ==========
         private float _currentVolume = 0f;

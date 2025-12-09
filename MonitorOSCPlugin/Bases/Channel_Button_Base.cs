@@ -8,19 +8,19 @@
     public abstract class Channel_Button_Base : PluginDynamicCommand, IDisposable
     {
         protected readonly string ChannelName;
-        protected readonly string SoloAddress;
-        protected readonly string MuteAddress;
+        protected readonly string ChannelAddress;  // 新：单一地址 /Monitor/Channel/{name}
 
         private readonly BitmapColor _soloColor = new BitmapColor(0, 255, 0);
         private readonly BitmapColor _muteColor = new BitmapColor(255, 0, 0);
         private readonly BitmapColor _defaultColor = new BitmapColor(0, 0, 0);
 
+        private int _ledState = 0;  // 0=off, 1=mute, 2=solo
+
         protected Channel_Button_Base(string channelName, string displayName, string description)
             : base(displayName, description, "Buttons")
         {
             this.ChannelName = channelName;
-            this.SoloAddress = $"/Monitor/Solo/{channelName}";
-            this.MuteAddress = $"/Monitor/Mute/{channelName}";
+            this.ChannelAddress = $"/Monitor/Channel/{channelName}";
 
             this.AddParameter(channelName, displayName, "Channels");
             OSCStateManager.Instance.StateChanged += this.OnOSCStateChanged;
@@ -30,34 +30,24 @@
 
         protected override void RunCommand(string actionParameter)
         {
-            // 根据当前激活模式（Solo 或 Mute），切换相应状态
-            if (Solo_Button.IsActive)
+            // 从 OSCStateManager 读取当前模式（而非本地 Solo_Button.IsActive）
+            var isSoloMode = OSCStateManager.Instance.GetState("/Monitor/Mode/Solo") > 0.5f;
+            var isMuteMode = OSCStateManager.Instance.GetState("/Monitor/Mode/Mute") > 0.5f;
+
+            if (isSoloMode || isMuteMode)
             {
-                var currentVal = OSCStateManager.Instance.GetState(this.SoloAddress);
-                var newVal = currentVal > 0.5f ? 0f : 1f;
-                MonitorOSCPlugin.SendOSCMessage(this.SoloAddress, newVal);
-            }
-            else if (Mute_Button.IsActive)
-            {
-                var currentVal = OSCStateManager.Instance.GetState(this.MuteAddress);
-                var newVal = currentVal > 0.5f ? 0f : 1f;
-                MonitorOSCPlugin.SendOSCMessage(this.MuteAddress, newVal);
+                // 发送点击事件（1.0），让 VST 执行 toggle
+                MonitorOSCPlugin.SendOSCMessage(this.ChannelAddress, 1f);
             }
             // 非 Solo/Mute 模式下不执行任何操作
-
-            // **优化**：延迟调用图像刷新，让状态先更新
-            // 使用 Task.Run 异步等待 50ms 后刷新，避免阻塞 UI 线程
-            _ = Task.Run(async () =>
-            {
-                //await Task.Delay(50);
-                this.ActionImageChanged(actionParameter); // 仅刷新当前按钮图像
-            });
         }
 
         private void OnOSCStateChanged(object sender, OSCStateManager.StateChangedEventArgs e)
         {
-            if (e.Address == this.SoloAddress || e.Address == this.MuteAddress)
+            if (e.Address == this.ChannelAddress)
             {
+                // 0 = off, 1 = mute (red), 2 = solo (green)
+                this._ledState = (int)e.Value;
                 //PluginLog.Info($"[{this.ChannelName}] 收到状态更新: {e.Address} = {e.Value}");
                 this.ActionImageChanged();
             }
@@ -65,23 +55,16 @@
 
         protected override BitmapImage GetCommandImage(string actionParameter, PluginImageSize imageSize)
         {
-            var isSoloActive = OSCStateManager.Instance.GetState(this.SoloAddress) > 0.5f;
-            var isMuteActive = OSCStateManager.Instance.GetState(this.MuteAddress) > 0.5f;
+            var color = this._ledState switch
+            {
+                1 => this._muteColor,    // 红色
+                2 => this._soloColor,    // 绿色
+                _ => this._defaultColor  // 黑色/不亮
+            };
 
             using (var bitmap = new BitmapBuilder(imageSize))
             {
-                if (isSoloActive)
-                {
-                    bitmap.Clear(this._soloColor);
-                }
-                else if (isMuteActive)
-                {
-                    bitmap.Clear(this._muteColor);
-                }
-                else
-                {
-                    bitmap.Clear(this._defaultColor);
-                }
+                bitmap.Clear(color);
 
                 // 调用新的可重写绘制方法
                 this.DrawButtonContent(bitmap);

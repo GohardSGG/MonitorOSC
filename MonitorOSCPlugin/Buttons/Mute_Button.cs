@@ -7,10 +7,9 @@
 
     public class Mute_Button : PluginDynamicCommand, IDisposable
     {
-        // 内部状态缓存
-        private static bool _isActive;
-
-        public static bool IsActive => _isActive;
+        // 从 OSCStateManager 读取状态（VST 广播的状态）
+        public static bool IsActive =>
+            OSCStateManager.Instance.GetState("/Monitor/Mode/Mute") > 0.5f;
 
         public Mute_Button() : base(
             displayName: "Mute Button",
@@ -23,43 +22,28 @@
 
         protected override void RunCommand(string actionParameter)
         {
-            _isActive = !_isActive;
-            if (!_isActive)
-            {
-                // 取消 Mute 模式：清除所有 Mute 状态
-                var addresses = OSCStateManager.Instance.GetAllStates()
-                    .Where(kvp => kvp.Key.StartsWith("/Monitor/Mute/"))
-                    .Select(kvp => kvp.Key)
-                    .ToList();
-                foreach (var addr in addresses)
-                {
-                    MonitorOSCPlugin.SendOSCMessage(addr, 0f);
-                }
-            }
-            // **优化**：刷新 Mute 按钮自身状态
-            this.ActionImageChanged(actionParameter);
+            // 只发送 toggle 消息，不改变本地状态
+            // VST 会处理状态切换并广播结果
+            MonitorOSCPlugin.SendOSCMessage("/Monitor/Mode/Mute", 1f);
         }
 
         private void OnOSCStateChanged(object sender, OSCStateManager.StateChangedEventArgs e)
         {
-            if (e.Address?.StartsWith("/Monitor/Mute/") == true)
+            // 监听模式状态变化
+            if (e.Address == "/Monitor/Mode/Mute")
             {
-                bool anyMute = OSCStateManager.Instance.GetAllStates()
-                    .Any(kvp => kvp.Key.StartsWith("/Monitor/Mute/") && kvp.Value > 0.5f);
-                // 只有在全局 Mute 激活状态变化时才刷新
-                if (anyMute != _isActive)
-                {
-                    _isActive = anyMute;
-                    this.ActionImageChanged();
-                }
+                this.ActionImageChanged();
             }
         }
 
         protected override BitmapImage GetCommandImage(string actionParameter, PluginImageSize imageSize)
         {
+            // 从 OSCStateManager 读取状态决定显示
+            var isActive = OSCStateManager.Instance.GetState("/Monitor/Mode/Mute") > 0.5f;
+
             using (var bitmap = new BitmapBuilder(imageSize))
             {
-                bitmap.Clear(_isActive ? new BitmapColor(255, 0, 0) : new BitmapColor(0, 0, 0));
+                bitmap.Clear(isActive ? new BitmapColor(255, 0, 0) : new BitmapColor(0, 0, 0));
                 bitmap.DrawText("M", fontSize: 39, color: BitmapColor.White);
                 return bitmap.ToImage();
             }

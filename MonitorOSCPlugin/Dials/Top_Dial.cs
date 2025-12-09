@@ -5,7 +5,7 @@
         public Top_Dial()
             : base(
                 groupName: "Top",
-                soloAddresses: new[] { "LTF", "RTF", "LTB", "RTB" }, // 只需要传入相对路径
+                channelNames: new[] { "LTF", "RTF", "LTB", "RTB" }, // 只需要传入相对路径
                 muteAddresses: new[] { "LTF", "RTF", "LTB", "RTB" }, // 只需要传入相对路径
                 displayName: "Top Dial",
                 description: "控制Top组的Solo和Mute状态")

@@ -5,8 +5,8 @@
         public Bottom_Dial()
             : base(
                 groupName: "Bottom",
-                soloAddresses: new[] { "LBF", "RBF", "LBB", "RBB" }, // 只需要传入相对路径
-                muteAddresses: new[] { "LBF", "RBF", "LBB", "RBB" }, // 只需要传入相对路径
+                channelNames: new[] { "LBF", "RBF", "LBB", "RBB" },
+                muteAddresses: new[] { "LBF", "RBF", "LBB", "RBB" }, // 保留参数以兼容
                 displayName: "Bottom Dial",
                 description: "控制Bottom组的Solo和Mute状态",
                 fontSize: 14)
